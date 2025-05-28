@@ -4,14 +4,21 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middleware/errorHandler');
 const bookRoutes = require('./modules/book/book.route');
+const chapterRoutes = require('./modules/chapter/chapter.route');
+const genreRoutes = require('./modules/genre/genre.route');
+const authRoutes = require('./modules/auth/auth.route');
+const userRoutes = require('./modules/user/user.route');
 const responseTransform = require('./middleware/responseTransform');
 const globalException = require('./middleware/globalException');
 
 const app = express();
 
-const allowedOrigins = [
-  'http://localhost:5173',
-  'https://travelagent-client.vercel.app',
+const allowedOrigins =  [
+  'http://localhost:5173', 
+  'https://riztranslation.rf.gd', 
+  'http://riztranslation.rf.gd', 
+  'https://www.riztranslation.rf.gd', 
+  'http://www.riztranslation.rf.gd'
 ];
 
 app.use(
@@ -45,6 +52,10 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/books', bookRoutes);
+app.use('/api/chapters', chapterRoutes);
+app.use('/api/genres', genreRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 
 app.use(errorHandler);
 
