@@ -6,7 +6,10 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node src/main.js",
-    "dev": "nodemon src/main.js"
+    "dev": "nodemon src/main.js",
+    "build": "npx prisma generate && npm run prisma:generate && next build",
+    "postinstall": "prisma generate",
+    "prisma:seed": "node prisma/seed.js"
   },
   "keywords": [],
   "author": "",
