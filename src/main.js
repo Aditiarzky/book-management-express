@@ -13,29 +13,28 @@ const globalException = require('./middleware/globalException');
 
 const app = express();
 
+const allowedDomain = /\.?riztranslation\.rf\.gd$/;
+const devDomain = /^localhost(:\d+)?$/;
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin) return callback(null, true);
-
-      const allowedDomain = /\.?riztranslation\.rf\.gd$/;
-      const devDomain = /^localhost(:\d+)?$/;
+      if (!origin) return callback(null, true); // untuk request tanpa origin (misal curl, postman)
 
       try {
         const url = new URL(origin);
         const hostname = url.hostname;
 
         const isProdAllowed = allowedDomain.test(hostname);
-        const isDevAllowed =
-          process.env.NODE_ENV === 'development' && devDomain.test(hostname);
+        const isDevAllowed = process.env.NODE_ENV === 'development' && devDomain.test(hostname);
 
         if (isProdAllowed || isDevAllowed) {
-          callback(null, origin); // izinkan domain valid
+          return callback(null, origin); // <- gunakan origin apa adanya agar persis match
         } else {
-          callback(new Error('Not allowed by CORS'));
+          return callback(new Error('Not allowed by CORS'));
         }
       } catch (err) {
-        callback(new Error('Invalid origin format'));
+        return callback(new Error('Invalid origin'));
       }
     },
     credentials: true,
