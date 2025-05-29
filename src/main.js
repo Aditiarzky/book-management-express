@@ -13,38 +13,40 @@ const globalException = require('./middleware/globalException');
 
 const app = express();
 
-const allowedDomain = /\.?riztranslation\.rf\.gd$/;
-const devDomain     = /^localhost(:\d+)?$/;
+const allowedDomain = /^(www\.)?riztranslation\.rf\.gd$/;
+const devDomain = /^localhost(:\d+)?$/;
 
-const corsOptions = {
-  origin: (origin, callback) => {
-    if (!origin) return callback(null, true);
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin) {
+        console.log('[CORS] No origin provided, allowing request');
+        return callback(null, true);
+      }
 
-    let hostname;
-    try {
-      hostname = new URL(origin).hostname;
-    } catch {
-      return callback(new Error('Invalid origin'));
-    }
+      try {
+        const url = new URL(origin);
+        const hostname = url.hostname;
+        const isProdAllowed = allowedDomain.test(hostname);
+        const isDevAllowed = process.env.NODE_ENV === 'development' && devDomain.test(hostname);
 
-    const isProdAllowed = allowedDomain.test(hostname);
-    const isDevAllowed  =
-      process.env.NODE_ENV === 'development' && devDomain.test(hostname);
+        console.log(`[CORS] Origin: ${origin}, Hostname: ${hostname}, ProdAllowed: ${isProdAllowed}, DevAllowed: ${isDevAllowed}`);
 
-    if (isProdAllowed || isDevAllowed) {
-      // <-- return `true`, bukan `origin`
-      return callback(null, true);
-    }
-
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true,
-  optionsSuccessStatus: 200,
-};
-
-app.use(cors(corsOptions));
-// untuk memastikan pre-flight juga di-handle
-app.options('*', cors(corsOptions));
+        if (isProdAllowed || isDevAllowed) {
+          return callback(null, origin); // Return the exact origin
+        } else {
+          return callback(new Error(`Origin ${origin} not allowed by CORS`));
+        }
+      } catch (err) {
+        console.error(`[CORS] Invalid origin: ${origin}`, err);
+        return callback(new Error('Invalid origin'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
 
 // Middleware untuk parsing JSON dan URL-encoded
 app.use(express.json());
