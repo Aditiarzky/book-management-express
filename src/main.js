@@ -14,32 +14,37 @@ const globalException = require('./middleware/globalException');
 const app = express();
 
 const allowedDomain = /\.?riztranslation\.rf\.gd$/;
-const devDomain = /^localhost(:\d+)?$/;
+const devDomain     = /^localhost(:\d+)?$/;
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) return callback(null, true); // untuk request tanpa origin (misal curl, postman)
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
 
-      try {
-        const url = new URL(origin);
-        const hostname = url.hostname;
+    let hostname;
+    try {
+      hostname = new URL(origin).hostname;
+    } catch {
+      return callback(new Error('Invalid origin'));
+    }
 
-        const isProdAllowed = allowedDomain.test(hostname);
-        const isDevAllowed = process.env.NODE_ENV === 'development' && devDomain.test(hostname);
+    const isProdAllowed = allowedDomain.test(hostname);
+    const isDevAllowed  =
+      process.env.NODE_ENV === 'development' && devDomain.test(hostname);
 
-        if (isProdAllowed || isDevAllowed) {
-          return callback(null, origin); // <- gunakan origin apa adanya agar persis match
-        } else {
-          return callback(new Error('Not allowed by CORS'));
-        }
-      } catch (err) {
-        return callback(new Error('Invalid origin'));
-      }
-    },
-    credentials: true,
-  })
-);
+    if (isProdAllowed || isDevAllowed) {
+      // <-- return `true`, bukan `origin`
+      return callback(null, true);
+    }
+
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+  optionsSuccessStatus: 200,
+};
+
+app.use(cors(corsOptions));
+// untuk memastikan pre-flight juga di-handle
+app.options('*', cors(corsOptions));
 
 // Middleware untuk parsing JSON dan URL-encoded
 app.use(express.json());
