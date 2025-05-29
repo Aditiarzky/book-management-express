@@ -13,21 +13,29 @@ const globalException = require('./middleware/globalException');
 
 const app = express();
 
-const allowedOrigins =  [
-  'http://localhost:5173', 
-  'https://riztranslation.rf.gd', 
-  'http://riztranslation.rf.gd', 
-  'https://www.riztranslation.rf.gd', 
-  'http://www.riztranslation.rf.gd'
-];
-
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, origin);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+      if (!origin) return callback(null, true);
+
+      const allowedDomain = /\.?riztranslation\.rf\.gd$/;
+      const devDomain = /^localhost(:\d+)?$/;
+
+      try {
+        const url = new URL(origin);
+        const hostname = url.hostname;
+
+        const isProdAllowed = allowedDomain.test(hostname);
+        const isDevAllowed =
+          process.env.NODE_ENV === 'development' && devDomain.test(hostname);
+
+        if (isProdAllowed || isDevAllowed) {
+          callback(null, origin); // izinkan domain valid
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      } catch (err) {
+        callback(new Error('Invalid origin format'));
       }
     },
     credentials: true,
