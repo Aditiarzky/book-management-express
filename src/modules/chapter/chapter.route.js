@@ -17,16 +17,46 @@ router.post(
   [
     body('bookId').isInt({ min: 1 }).withMessage('Book ID must be a positive integer'),
     body('chapter').isInt({ min: 1 }).withMessage('Chapter must be a positive integer'),
-    body('volume').optional().isInt({ min: 1 }).withMessage('Volume must be a positive integer'),
-    body('nama').optional().isString().withMessage('Nama must be a string'),
-    body('thumbnail').optional().isString().withMessage('Thumbnail must be a string'),
-    body('isigambar').optional().isArray().withMessage('Isigambar must be an array'),
-    body('isitext').optional().isString().withMessage('Isitext must be a string'),
+    body('volume')
+      .optional({ nullable: true }) 
+      .isInt({ min: 1 })
+      .withMessage('Volume must be a positive integer'),
+    body('nama')
+      .optional({ nullable: true }) 
+      .isString()
+      .withMessage('Nama must be a string'),
+    body('thumbnail')
+      .optional({ nullable: true }) 
+      .isString()
+      .withMessage('Thumbnail must be a string'),
+    body('isigambar')
+      .optional({ nullable: true }) 
+      .custom((value) => {
+        if (value === null || value === undefined) return true;
+        if (Array.isArray(value)) {
+          return value.every((item) => typeof item === 'string');
+        }
+        if (typeof value === 'string') {
+          try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) && parsed.every((item) => typeof item === 'string');
+          } catch {
+            throw new Error('Isigambar must be a valid JSON array of strings');
+          }
+        }
+        throw new Error('Isigambar must be an array or a valid JSON array string');
+      })
+      .withMessage('Isigambar must be an array or a valid JSON array string'),
+    body('isitext')
+      .optional({ nullable: true }) 
+      .isString()
+      .withMessage('Isitext must be a string'),
   ],
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors:', errors.array()); 
+      return res.status(400).json({ success: false, errors: errors.array() }); // Ensure consistent error response
     }
     chapterController.create(req, res, next);
   }
@@ -73,19 +103,53 @@ router.get(
   }
 );
 
-// PUT /api/chapters/:id
 router.put(
   '/:id',
   [
     param('id').isInt({ min: 1 }).withMessage('Chapter ID must be a positive integer'),
     query('bookId').isInt({ min: 1 }).withMessage('Book ID must be a positive integer'),
-    body('bookId').optional().isInt({ min: 1 }).withMessage('Book ID must be a positive integer'),
-    body('chapter').optional().isInt({ min: 1 }).withMessage('Chapter must be a positive integer'),
-    body('volume').optional().isInt({ min: 1 }).withMessage('Volume must be a positive integer'),
-    body('nama').optional().isString().withMessage('Nama must be a string'),
-    body('thumbnail').optional().isString().withMessage('Thumbnail must be a string'),
-    body('isigambar').optional().isArray().withMessage('Isigambar must be an array'),
-    body('isitext').optional().isString().withMessage('Isitext must be a string'),
+    body('bookId')
+      .optional({ nullable: true }) // Allow null
+      .isInt({ min: 1 })
+      .withMessage('Book ID must be a positive integer'),
+    body('chapter')
+      .optional({ nullable: true }) // Allow null
+      .isInt({ min: 1 })
+      .withMessage('Chapter must be a positive integer'),
+    body('volume')
+      .optional({ nullable: true }) // Allow null
+      .isInt({ min: 1 })
+      .withMessage('Volume must be a positive integer'),
+    body('nama')
+      .optional({ nullable: true }) // Allow null
+      .isString()
+      .withMessage('Nama must be a string'),
+    body('thumbnail')
+      .optional({ nullable: true }) // Allow null
+      .isString()
+      .withMessage('Thumbnail must be a string'),
+    body('isigambar')
+      .optional({ nullable: true }) // Allow null
+      .custom((value) => {
+        if (value === null || value === undefined) return true;
+        if (Array.isArray(value)) {
+          return value.every((item) => typeof item === 'string');
+        }
+        if (typeof value === 'string') {
+          try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) && parsed.every((item) => typeof item === 'string');
+          } catch {
+            throw new Error('Isigambar must be a valid JSON array of strings');
+          }
+        }
+        throw new Error('Isigambar must be an array or a valid JSON array string');
+      })
+      .withMessage('Isigambar must be an array or a valid JSON array string'),
+    body('isitext')
+      .optional({ nullable: true })
+      .isString()
+      .withMessage('Isitext must be a string'),
     body().custom((value, { req }) => {
       if (value.bookId && value.bookId !== parseInt(req.query.bookId, 10)) {
         throw new Error('Book ID in body must match Book ID in query');
@@ -96,7 +160,8 @@ router.put(
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      console.log('Validation errors:', errors.array()); // Log errors for debugging
+      return res.status(400).json({ success: false, errors: errors.array() });
     }
     chapterController.update(req, res, next);
   }
