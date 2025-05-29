@@ -1,14 +1,17 @@
+// src/prisma/client.js
 const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'], // Logging untuk debugging
-});
+let prisma;
 
-prisma.$connect()
-  .then(() => console.log('Prisma connected to database'))
-  .catch((err) => {
-    console.error('Prisma failed to connect:', err);
-    process.exit(1);
-  });
+if (process.env.NODE_ENV === 'production') {
+  prisma = new PrismaClient();
+} else {
+  if (!global.prisma) {
+    global.prisma = new PrismaClient({
+      log: ['query', 'info', 'warn', 'error'],
+    });
+  }
+  prisma = global.prisma;
+}
 
 module.exports = prisma;
