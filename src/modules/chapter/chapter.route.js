@@ -16,7 +16,7 @@ router.post(
   '/',
   [
     body('bookId').isInt({ min: 1 }).withMessage('Book ID must be a positive integer'),
-    body('chapter').isInt({ min: 1 }).withMessage('Chapter must be a positive integer'),
+    body('chapter').isInt({ min: 0 }).withMessage('Chapter must be a non-negative integer'),
     body('volume')
       .optional({ nullable: true }) 
       .isInt({ min: 1 })
@@ -114,8 +114,8 @@ router.put(
       .withMessage('Book ID must be a positive integer'),
     body('chapter')
       .optional({ nullable: true }) // Allow null
-      .isInt({ min: 1 })
-      .withMessage('Chapter must be a positive integer'),
+      .isInt({ min: 0 })
+      .withMessage('Chapter must be a non-negative integer'),
     body('volume')
       .optional({ nullable: true }) // Allow null
       .isInt({ min: 1 })
