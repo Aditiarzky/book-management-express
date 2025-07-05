@@ -13,40 +13,48 @@ const globalException = require('./middleware/globalException');
 
 const app = express();
 
-const allowedDomain = /^(www\.)?riztranslation\.rf\.gd$/;
-const devDomain = /^localhost(:\d+)?$/;
+// === CORS SETUP ===
+const PROD_WHITELIST = [
+  'https://riztranslation.rf.gd',
+  'https://www.riztranslation.rf.gd'
+];
+const DEV_WHITELIST = [
+  /^localhost(:\d+)?$/
+];
 
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (!origin) {
-        console.log('[CORS] No origin provided, allowing request');
-        return callback(null, true);
-      }
+app.use(cors({
+  origin: (origin, callback) => {
+    // allow non-browser requests (Postman, mobile apps) with no origin header
+    if (!origin) {
+      return callback(null, true);
+    }
 
+    let isAllowed = false;
+    // exact-match production domains
+    if (PROD_WHITELIST.includes(origin)) {
+      isAllowed = true;
+    } else {
+      // check dev hostnames via regex
       try {
-        const url = new URL(origin);
-        const hostname = url.hostname;
-        const isProdAllowed = allowedDomain.test(hostname);
-        const isDevAllowed = process.env.NODE_ENV === 'development' && devDomain.test(hostname);
-
-        console.log(`[CORS] Origin: ${origin}, Hostname: ${hostname}, ProdAllowed: ${isProdAllowed}, DevAllowed: ${isDevAllowed}`);
-
-        if (isProdAllowed || isDevAllowed) {
-          return callback(null, origin); // Return the exact origin
-        } else {
-          return callback(new Error(`Origin ${origin} not allowed by CORS`));
-        }
+        const hostname = new URL(origin).hostname;
+        isAllowed = DEV_WHITELIST.some(rx => rx.test(hostname));
       } catch (err) {
-        console.error(`[CORS] Invalid origin: ${origin}`, err);
         return callback(new Error('Invalid origin'));
       }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  })
-);
+    }
+
+    if (isAllowed) {
+      // echo back the exact origin
+      return callback(null, true);
+    } else {
+      return callback(new Error(`CORS policy: origin ${origin} not allowed`));
+    }
+  },
+  credentials: true,
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization']
+}));
+// === END CORS SETUP ===
 
 // Middleware untuk parsing JSON dan URL-encoded
 app.use(express.json());
