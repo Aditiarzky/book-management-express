@@ -18,34 +18,30 @@ const PROD_WHITELIST = [
   'https://riztranslation.rf.gd',
   'https://www.riztranslation.rf.gd'
 ];
-const DEV_WHITELIST = [
-  /^localhost(:\d+)?$/
-];
+const DEV_WHITELIST = [/^localhost(:\d+)?$/];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // allow non-browser requests (Postman, mobile apps) with no origin header
+    // allow tools (no origin header)
     if (!origin) {
       return callback(null, true);
     }
 
     let isAllowed = false;
-    // exact-match production domains
     if (PROD_WHITELIST.includes(origin)) {
       isAllowed = true;
     } else {
-      // check dev hostnames via regex
       try {
-        const hostname = new URL(origin).hostname;
-        isAllowed = DEV_WHITELIST.some(rx => rx.test(hostname));
-      } catch (err) {
+        const host = new URL(origin).hostname;
+        isAllowed = DEV_WHITELIST.some(rx => rx.test(host));
+      } catch {
         return callback(new Error('Invalid origin'));
       }
     }
 
     if (isAllowed) {
-      // echo back the exact origin
-      return callback(null, true);
+      // echo back the exact origin header the browser sent
+      return callback(null, origin);
     } else {
       return callback(new Error(`CORS policy: origin ${origin} not allowed`));
     }
