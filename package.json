@@ -8,6 +8,7 @@
     "start": "node src/main.js",
     "dev": "nodemon src/main.js",
     "build": "npx prisma generate && npm run prisma:generate && next build",
+    "prisma:generate": "prisma generate",
     "postinstall": "prisma generate",
     "prisma:seed": "node prisma/seed.js"
   },
