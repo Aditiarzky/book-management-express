@@ -47,6 +47,20 @@ const findByBook = async (req, res, next) => {
   }
 };
 
+const getLatestChapters = async (req, res, next) => {
+  try {
+    const { page = '1', limit = '10', sortBy = 'desc' } = req.query;
+    const result = await chapterService.getLatestChapters(
+      parseInt(page, 10),
+      parseInt(limit, 10),
+      sortBy
+    );
+    res.json(result);
+  } catch (err) {
+    next(err);
+  }
+};
+
 const update = async (req, res, next) => {
   try {
     const chapter = await chapterService.update(parseInt(req.params.id, 10), req.body);
@@ -70,6 +84,7 @@ module.exports = {
   findAll,
   findOne,
   findByBook,
+  getLatestChapters,
   update,
   remove,
 };

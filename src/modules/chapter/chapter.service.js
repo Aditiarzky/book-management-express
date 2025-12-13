@@ -95,8 +95,52 @@ class ChapterService {
     return chapters;
   }
 
+  async getLatestChapters(page, limit, sortBy = 'desc') {
+    const skip = (page - 1) * limit;
+
+    const latestChapterIds = await prisma.$queryRaw`
+      SELECT c.id
+      FROM "Chapter" c
+      INNER JOIN (
+          SELECT "bookId", MAX(created_at) AS max_created_at
+          FROM "Chapter"
+          GROUP BY "bookId"
+      ) AS latest ON c."bookId" = latest."bookId" AND c.created_at = latest.max_created_at
+    `;
+
+    const chapterIds = latestChapterIds.map((c) => c.id);
+
+    const chapters = await prisma.chapter.findMany({
+      where: {
+        id: {
+          in: chapterIds,
+        },
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        created_at: sortBy,
+      },
+      include: { book: true },
+    });
+
+    const total = chapterIds.length;
+
+    return {
+      data: chapters,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
   async update(id, updateChapterDto) {
-    const chapter = await this.findOne(id, updateChapterDto.bookId ?? 0);
+    
+    await this.findOne(id, updateChapterDto.bookId ?? 0);
+
     if (updateChapterDto.bookId) {
       const book = await prisma.book.findUnique({ where: { id: updateChapterDto.bookId } });
       if (!book) {

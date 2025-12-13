@@ -71,6 +71,15 @@ router.get('/', paginationValidation, (req, res, next) => {
   chapterController.findAll(req, res, next);
 });
 
+// GET /api/chapters/latest
+router.get('/latest', paginationValidation, (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  chapterController.getLatestChapters(req, res, next);
+});
+
 // GET /api/chapters/:id
 router.get(
   '/:id',
