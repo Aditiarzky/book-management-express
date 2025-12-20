@@ -9,10 +9,13 @@ class ChapterService {
       throw error;
     }
 
+    // Pastikan chapter di-convert ke float
+    const chapterFloat = parseFloat(createChapterDto.chapter);
+
     return prisma.chapter.create({
       data: {
         book: { connect: { id: createChapterDto.bookId } },
-        chapter: createChapterDto.chapter,
+        chapter: chapterFloat,
         volume: createChapterDto.volume,
         nama: createChapterDto.nama,
         thumbnail: createChapterDto.thumbnail,
@@ -81,9 +84,10 @@ class ChapterService {
   async findByBook(bookId, sortBy = 'desc') {
     const chapters = await prisma.chapter.findMany({
       where: { bookId },
-      orderBy: {
-        chapter: sortBy,
-      },
+      orderBy: [
+        { volume: sortBy },
+        { chapter: sortBy },
+      ],
       include: { book: true },
     });
 
@@ -138,7 +142,6 @@ class ChapterService {
   }
 
   async update(id, updateChapterDto) {
-    
     await this.findOne(id, updateChapterDto.bookId ?? 0);
 
     if (updateChapterDto.bookId) {
@@ -150,17 +153,23 @@ class ChapterService {
       }
     }
 
+    // Pastikan chapter di-convert ke float jika ada
+    const updateData = {
+      book: updateChapterDto.bookId ? { connect: { id: updateChapterDto.bookId } } : undefined,
+      volume: updateChapterDto.volume,
+      nama: updateChapterDto.nama,
+      thumbnail: updateChapterDto.thumbnail,
+      isigambar: updateChapterDto.isigambar,
+      isitext: updateChapterDto.isitext,
+    };
+
+    if (updateChapterDto.chapter !== undefined) {
+      updateData.chapter = parseFloat(updateChapterDto.chapter);
+    }
+
     return prisma.chapter.update({
       where: { id },
-      data: {
-        book: updateChapterDto.bookId ? { connect: { id: updateChapterDto.bookId } } : undefined,
-        chapter: updateChapterDto.chapter,
-        volume: updateChapterDto.volume,
-        nama: updateChapterDto.nama,
-        thumbnail: updateChapterDto.thumbnail,
-        isigambar: updateChapterDto.isigambar,
-        isitext: updateChapterDto.isitext,
-      },
+      data: updateData,
       include: { book: true },
     });
   }

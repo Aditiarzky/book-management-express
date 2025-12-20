@@ -16,21 +16,34 @@ router.post(
   '/',
   [
     body('bookId').isInt({ min: 1 }).withMessage('Book ID must be a positive integer'),
-    body('chapter').isInt({ min: 0 }).withMessage('Chapter must be a non-negative integer'),
+    body('chapter')
+      .custom((value) => {
+        // Validasi float dengan presisi desimal
+        const floatValue = parseFloat(value);
+        if (isNaN(floatValue)) {
+          throw new Error('Chapter must be a valid number');
+        }
+        if (floatValue < 0) {
+          throw new Error('Chapter must be a non-negative number');
+        }
+        // Pastikan nilai dikembalikan sebagai float
+        return true;
+      })
+      .customSanitizer((value) => parseFloat(value)), // Konversi ke float
     body('volume')
-      .optional({ nullable: true }) 
+      .optional({ nullable: true })
       .isInt({ min: 1 })
       .withMessage('Volume must be a positive integer'),
     body('nama')
-      .optional({ nullable: true }) 
+      .optional({ nullable: true })
       .isString()
       .withMessage('Nama must be a string'),
     body('thumbnail')
-      .optional({ nullable: true }) 
+      .optional({ nullable: true })
       .isString()
       .withMessage('Thumbnail must be a string'),
     body('isigambar')
-      .optional({ nullable: true }) 
+      .optional({ nullable: true })
       .custom((value) => {
         if (value === null || value === undefined) return true;
         if (Array.isArray(value)) {
@@ -48,15 +61,15 @@ router.post(
       })
       .withMessage('Isigambar must be an array or a valid JSON array string'),
     body('isitext')
-      .optional({ nullable: true }) 
+      .optional({ nullable: true })
       .isString()
       .withMessage('Isitext must be a string'),
   ],
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('Validation errors:', errors.array()); 
-      return res.status(400).json({ success: false, errors: errors.array() }); // Ensure consistent error response
+      console.log('Validation errors:', errors.array());
+      return res.status(400).json({ success: false, errors: errors.array() });
     }
     chapterController.create(req, res, next);
   }
@@ -112,33 +125,44 @@ router.get(
   }
 );
 
+// PUT /api/chapters/:id
 router.put(
   '/:id',
   [
     param('id').isInt({ min: 1 }).withMessage('Chapter ID must be a positive integer'),
     query('bookId').isInt({ min: 1 }).withMessage('Book ID must be a positive integer'),
     body('bookId')
-      .optional({ nullable: true }) // Allow null
+      .optional({ nullable: true })
       .isInt({ min: 1 })
       .withMessage('Book ID must be a positive integer'),
     body('chapter')
-      .optional({ nullable: true }) // Allow null
-      .isInt({ min: 0 })
-      .withMessage('Chapter must be a non-negative integer'),
+      .optional({ nullable: true })
+      .custom((value) => {
+        if (value === null || value === undefined) return true;
+        const floatValue = parseFloat(value);
+        if (isNaN(floatValue)) {
+          throw new Error('Chapter must be a valid number');
+        }
+        if (floatValue < 0) {
+          throw new Error('Chapter must be a non-negative number');
+        }
+        return true;
+      })
+      .customSanitizer((value) => value ? parseFloat(value) : value), // Konversi ke float jika ada
     body('volume')
-      .optional({ nullable: true }) // Allow null
+      .optional({ nullable: true })
       .isInt({ min: 1 })
       .withMessage('Volume must be a positive integer'),
     body('nama')
-      .optional({ nullable: true }) // Allow null
+      .optional({ nullable: true })
       .isString()
       .withMessage('Nama must be a string'),
     body('thumbnail')
-      .optional({ nullable: true }) // Allow null
+      .optional({ nullable: true })
       .isString()
       .withMessage('Thumbnail must be a string'),
     body('isigambar')
-      .optional({ nullable: true }) // Allow null
+      .optional({ nullable: true })
       .custom((value) => {
         if (value === null || value === undefined) return true;
         if (Array.isArray(value)) {
@@ -169,7 +193,7 @@ router.put(
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      console.log('Validation errors:', errors.array()); // Log errors for debugging
+      console.log('Validation errors:', errors.array());
       return res.status(400).json({ success: false, errors: errors.array() });
     }
     chapterController.update(req, res, next);

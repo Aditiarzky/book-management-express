@@ -43,6 +43,10 @@ class BookService {
               created_at: true,
               thumbnail: true,
             },
+            orderBy: [
+              { volume: 'asc' },
+              { chapter: 'asc' },
+            ],
           },
         },
       });
@@ -80,6 +84,10 @@ class BookService {
               created_at: true,
               thumbnail: true,
             },
+            orderBy: [
+              { volume: 'asc' },
+              { chapter: 'asc' },
+            ],
           },
         },
       });
@@ -123,6 +131,10 @@ class BookService {
               created_at: true,
               thumbnail: true,
             },
+            orderBy: [
+              { volume: 'asc' },
+              { chapter: 'asc' },
+            ],
           },
         },
       });
@@ -185,6 +197,10 @@ class BookService {
               created_at: true,
               thumbnail: true,
             },
+            orderBy: [
+              { volume: 'asc' },
+              { chapter: 'asc' },
+            ],
           },
         },
       });
@@ -268,6 +284,10 @@ class BookService {
               created_at: true,
               thumbnail: true,
             },
+            orderBy: [
+              { volume: 'asc' },
+              { chapter: 'asc' },
+            ],
           },
         },
       });
