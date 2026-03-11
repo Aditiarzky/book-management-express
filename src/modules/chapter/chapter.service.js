@@ -1,4 +1,3 @@
-const { Prisma } = require('@prisma/client');
 const prisma = require('../../config/prisma');
 
 class ChapterService {
@@ -103,21 +102,15 @@ class ChapterService {
   async getLatestChapters(page, limit, sortBy = 'desc') {
     const skip = (page - 1) * limit;
 
-    const orderDirection = sortBy === 'asc' ? Prisma.raw('ASC') : Prisma.raw('DESC');
-
-    const latestChapterIds = await prisma.$queryRaw(
-      Prisma.sql`
-        WITH latest AS (
-          SELECT DISTINCT ON ("bookId") id, created_at
+    const latestChapterIds = await prisma.$queryRaw`
+      SELECT c.id
+      FROM "Chapter" c
+      INNER JOIN (
+          SELECT "bookId", MAX(created_at) AS max_created_at
           FROM "Chapter"
-          ORDER BY "bookId", created_at DESC
-        )
-        SELECT id
-        FROM latest
-        ORDER BY created_at ${orderDirection}, id ${orderDirection}
-        LIMIT ${limit} OFFSET ${skip}
-      `
-    );
+          GROUP BY "bookId"
+      ) AS latest ON c."bookId" = latest."bookId" AND c.created_at = latest.max_created_at
+    `;
 
     const chapterIds = latestChapterIds.map((c) => c.id);
 
@@ -135,12 +128,7 @@ class ChapterService {
       include: { book: true },
     });
 
-    const totalResult = await prisma.$queryRaw`
-      SELECT COUNT(DISTINCT "bookId")::int AS total
-      FROM "Chapter"
-    `;
-
-    const total = totalResult[0]?.total ?? 0;
+    const total = chapterIds.length;
 
     return {
       data: chapters,
