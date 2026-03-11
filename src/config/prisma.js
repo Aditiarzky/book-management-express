@@ -1,14 +1,16 @@
 const { PrismaClient } = require('@prisma/client');
 
-const prisma = new PrismaClient({
-  log: ['query', 'info', 'warn', 'error'], // Logging untuk debugging
-});
+// eslint-disable-next-line no-undef
+const isProduction = process.env.NODE_ENV === 'production';
+const prismaLog = isProduction ? ['warn', 'error'] : ['query', 'info', 'warn', 'error'];
 
-prisma.$connect()
-  .then(() => console.log('Prisma connected to database'))
-  .catch((err) => {
-    console.error('Prisma failed to connect:', err);
-    process.exit(1);
-  });
+// Reuse PrismaClient across hot reloads/serverless warm starts.
+const globalForPrisma = globalThis;
+
+const prisma = globalForPrisma.prisma || new PrismaClient({ log: prismaLog });
+
+if (!isProduction) {
+  globalForPrisma.prisma = prisma;
+}
 
 module.exports = prisma;

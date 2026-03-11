@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable no-undef */
-require('dotenv').config(); 
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -18,7 +18,9 @@ const app = express();
 // === CORS SETUP ===
 const PROD_WHITELIST = [
   'https://riztranslation.rf.gd',
-  'https://www.riztranslation.rf.gd'
+  'https://www.riztranslation.rf.gd',
+  'https://riztranslation.pages.dev',
+  'http://riztranslation.pages.dev'
 ];
 const DEV_WHITELIST = [/^localhost(:\d+)?$/];
 
@@ -49,8 +51,8 @@ app.use(cors({
     }
   },
   credentials: true,
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 // === END CORS SETUP ===
 
